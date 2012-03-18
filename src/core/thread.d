@@ -2986,7 +2986,6 @@ private
 
     version( Posix )
     {
-        import core.sys.posix.unistd;   // for sysconf
         import core.sys.posix.sys.mman; // for mmap
 
         version( AsmX86_Windows )    {} else
@@ -3004,36 +3003,7 @@ private
             import core.sys.posix.ucontext;
         }
     }
-
-    __gshared const size_t PAGESIZE;
 }
-
-
-shared static this()
-{
-    static if( __traits( compiles, GetSystemInfo ) )
-    {
-        SYSTEM_INFO info;
-        GetSystemInfo( &info );
-
-        PAGESIZE = info.dwPageSize;
-        assert( PAGESIZE < int.max );
-    }
-    else static if( __traits( compiles, sysconf ) &&
-                    __traits( compiles, _SC_PAGESIZE ) )
-    {
-        PAGESIZE = cast(size_t) sysconf( _SC_PAGESIZE );
-        assert( PAGESIZE < int.max );
-    }
-    else
-    {
-        version( PPC )
-            PAGESIZE = 8192;
-        else
-            PAGESIZE = 4096;
-    }
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Fiber Entry Point and Context Switch
@@ -3298,7 +3268,7 @@ class Fiber
     ///////////////////////////////////////////////////////////////////////////
     // Initialization
     ///////////////////////////////////////////////////////////////////////////
-
+    import rt.memory;    // PAGESIZE
 
     /**
      * Initializes a fiber object which is associated with a static

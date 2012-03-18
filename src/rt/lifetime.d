@@ -62,23 +62,33 @@ private
 
     extern (C) void _d_monitordelete(Object h, bool det = true);
 
-    enum
-    {
-        PAGESIZE = 4096
-    }
+    import rt.memory;    // PAGESIZE
 
     alias bool function(Object) CollectHandler;
     __gshared CollectHandler collectHandler = null;
 
                 enum : size_t
     {
-        BIGLENGTHMASK = ~(cast(size_t)PAGESIZE - 1),
         SMALLPAD = 1,
         MEDPAD = ushort.sizeof,
         LARGEPREFIX = 16, // 16 bytes padding at the front of the array
         LARGEPAD = LARGEPREFIX + 1,
         MAXSMALLSIZE = 256-SMALLPAD,
-        MAXMEDSIZE = (PAGESIZE / 2) - MEDPAD
+    }
+    
+    static if( is(typeof({enum BIGLENGTHMASK = ~(PAGESIZE - 1); return BIGLENGTHMASK;}())) ) {
+        enum : size_t {
+            BIGLENGTHMASK = ~(PAGESIZE - 1),
+            MAXMEDSIZE = (PAGESIZE / 2) - MEDPAD,
+        }
+    } else {
+        immutable size_t BIGLENGTHMASK;
+        immutable size_t MAXMEDSIZE;
+        
+        shared static this() {
+            BIGLENGTHMASK = ~(PAGESIZE - 1);
+            MAXMEDSIZE = (PAGESIZE / 2) - MEDPAD;
+        }
     }
 }
 

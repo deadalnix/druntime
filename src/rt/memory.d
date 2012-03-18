@@ -13,6 +13,36 @@
  */
 module rt.memory;
 
+version(Posix) {
+	 import core.sys.posix.unistd;   // for sysconf
+}
+
+// Calculate page size depending on the system.
+static if( __traits( compiles, GetSystemInfo ) ) { // This is unlikely to be true as long as GetSystemInfo doesn't appear in druntime.
+    immutable size_t PAGESIZE;
+
+    shared static this() {
+        SYSTEM_INFO info;
+        GetSystemInfo( &info );
+
+        PAGESIZE = info.dwPageSize;
+        assert( PAGESIZE < int.max );
+    }
+} else static if( __traits( compiles, sysconf ) &&
+                    __traits( compiles, _SC_PAGESIZE ) ) {
+    immutable size_t PAGESIZE;
+
+    shared static this() {
+        PAGESIZE = cast(size_t) sysconf( _SC_PAGESIZE );
+        assert( PAGESIZE < int.max );
+    }
+} else {
+    version( PPC ) {
+        enum : size_t { PAGESIZE = 8192 }
+    } else {
+        enum : size_t { PAGESIZE = 4096 }
+    }
+}
 
 private
 {

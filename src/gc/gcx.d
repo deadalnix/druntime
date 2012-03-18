@@ -1492,10 +1492,21 @@ class GC
 
 /* ============================ Gcx =============================== */
 
-enum
-{   PAGESIZE =    4096,
-    COMMITSIZE = (4096*16),
-    POOLSIZE =   (4096*256),
+import rt.memory;    // PAGESIZE
+
+static if( is(typeof({enum FOO = PAGESIZE; return FOO;}())) ) {
+    enum {
+        COMMITSIZE = (PAGESIZE * 16),
+        POOLSIZE   = (PAGESIZE * 256),
+    }
+} else {
+    immutable size_t COMMITSIZE;
+    immutable size_t POOLSIZE;
+    
+    shared static this() {
+        COMMITSIZE = PAGESIZE * 16;
+        POOLSIZE   = PAGESIZE * 256;
+    }
 }
 
 
